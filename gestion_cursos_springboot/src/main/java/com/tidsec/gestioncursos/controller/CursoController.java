@@ -1,7 +1,10 @@
 package com.tidsec.gestioncursos.controller;
 
 import com.tidsec.gestioncursos.entidades.Curso;
+import com.tidsec.gestioncursos.report.CursoExporterExcel;
+import com.tidsec.gestioncursos.report.CursoExporterPDF;
 import com.tidsec.gestioncursos.repositorio.ICursoRepository;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -10,6 +13,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List; // classe para llamar al metodo list
 
 @Controller // se especifica que esta clase es controlador
@@ -84,5 +91,35 @@ public class CursoController
          redirectAttributes.addFlashAttribute("message", exception.getMessage());
       }
       return "redirect:/cursos";
+   }
+   @GetMapping("/export/pdf")
+   public void GenerarReportePDF(HttpServletResponse responde) throws IOException {
+      responde.setContentType("application/pdf");
+      DateFormat dateFormat= new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+      String curretDateTime = dateFormat.format(new Date());
+
+      String headerKey = "Content-Disposition";
+      String headerValue = "attachment; filename=cursos" + curretDateTime + ".pdf";
+      responde.setHeader(headerKey,headerValue);
+
+      List<Curso> cursos = cursoRepository.findAll();
+
+      CursoExporterPDF exporterPDF = new CursoExporterPDF(cursos);
+      exporterPDF.export(responde);
+   }
+   @GetMapping("/export/excel")
+   public void GenerarReporteExcel(HttpServletResponse responde) throws IOException {
+      responde.setContentType("application/octet-stream");
+      DateFormat dateFormat= new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+      String curretDateTime = dateFormat.format(new Date());
+
+      String headerKey = "Content-Disposition";
+      String headerValue = "attachment; filename=cursos" + curretDateTime + ".xlsx";
+      responde.setHeader(headerKey,headerValue);
+
+      List<Curso> cursos = cursoRepository.findAll();
+
+      CursoExporterExcel exporterExcel = new CursoExporterExcel(cursos);
+      exporterExcel.export(responde);
    }
 }
